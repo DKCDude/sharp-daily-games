@@ -1,0 +1,1 @@
+{"version":3,"file":"todayWordResponse.d.ts","sourceRoot":"","sources":["../../../src/generated/types/todayWordResponse.ts"],"names":[],"mappings":"AAAA;;;;;;GAMG;AAEH,MAAM,WAAW,iBAAiB;IAChC,IAAI,EAAE,MAAM,CAAC;IACb,iEAAiE;IACjE,IAAI,CAAC,EAAE,MAAM,GAAG,IAAI,CAAC;IACrB,gBAAgB,EAAE,MAAM,CAAC;IACzB,YAAY,CAAC,EAAE,MAAM,GAAG,IAAI,CAAC;CAC9B"}

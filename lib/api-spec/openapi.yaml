@@ -1,0 +1,848 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Recollectify API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: game
+    description: Game operations
+  - name: leaderboard
+    description: Leaderboard operations
+  - name: crossnumbers
+    description: Crossnumbers daily puzzle operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /auth/user:
+    get:
+      operationId: getCurrentAuthUser
+      tags: [auth]
+      summary: Get current authenticated user
+      responses:
+        "200":
+          description: Current auth state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUserState"
+
+  /mobile-auth/token-exchange:
+    post:
+      operationId: exchangeMobileAuthorizationCode
+      tags: [auth]
+      summary: Exchange mobile OIDC authorization code for a session token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MobileAuthExchangeRequest"
+      responses:
+        "200":
+          description: Session token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MobileAuthExchangeResponse"
+
+  /mobile-auth/logout:
+    post:
+      operationId: logoutMobileSession
+      tags: [auth]
+      summary: Mobile logout — deletes the session
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MobileLogoutResult"
+
+  /game/today:
+    get:
+      operationId: getTodayWord
+      tags: [game]
+      summary: Get the word of the day (only revealed during the reveal phase)
+      responses:
+        "200":
+          description: Today's word
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TodayWordResponse"
+
+  /game/state:
+    get:
+      operationId: getGameState
+      tags: [game]
+      summary: Get the player's full game state for today
+      responses:
+        "200":
+          description: Game state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameState"
+
+  /game/reveal:
+    post:
+      operationId: startReveal
+      tags: [game]
+      summary: Mark that the player has started viewing today's word (begins the reveal timer)
+      responses:
+        "200":
+          description: Reveal started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameState"
+
+  /game/submit:
+    post:
+      operationId: submitGuess
+      tags: [game]
+      summary: Submit the player's full sequence of recalled words for today
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuessSubmission"
+      responses:
+        "200":
+          description: Guess result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuessOutcome"
+
+  /game/history:
+    get:
+      operationId: getStreakHistory
+      tags: [game]
+      summary: Get the list of words from the player's current streak (in order)
+      responses:
+        "200":
+          description: Streak history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreakHistoryResponse"
+
+  /leaderboard:
+    get:
+      operationId: getLeaderboard
+      tags: [leaderboard]
+      summary: Top players by longest streak and current streak
+      responses:
+        "200":
+          description: Leaderboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaderboardResponse"
+
+  /stats:
+    get:
+      operationId: getGlobalStats
+      tags: [game]
+      summary: Global stats for the wow surface
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GlobalStatsResponse"
+
+  /crossnumbers/state:
+    get:
+      operationId: getCrossnumbersState
+      tags: [crossnumbers]
+      summary: Player's Crossnumbers state for today (streak, attempt status)
+      responses:
+        "200":
+          description: Crossnumbers state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CrossnumbersState"
+
+  /crossnumbers/puzzle:
+    get:
+      operationId: getCrossnumbersPuzzle
+      tags: [crossnumbers]
+      summary: Today's Crossnumbers puzzle (grid skeleton + clues, no answers)
+      responses:
+        "200":
+          description: Today's puzzle
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CrossnumbersPuzzle"
+
+  /crossnumbers/progress:
+    put:
+      operationId: saveCrossnumbersProgress
+      tags: [crossnumbers]
+      summary: Autosave the player's in-progress grid for today
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CrossnumbersProgress"
+      responses:
+        "200":
+          description: Progress saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CrossnumbersProgressAck"
+
+  /crossnumbers/submit:
+    post:
+      operationId: submitCrossnumbers
+      tags: [crossnumbers]
+      summary: Submit the player's filled grid for today
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CrossnumbersSubmission"
+      responses:
+        "200":
+          description: Submission result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CrossnumbersSubmitResult"
+
+  /crossnumbers/history:
+    get:
+      operationId: getCrossnumbersHistory
+      tags: [crossnumbers]
+      summary: Recent solve history for the player
+      responses:
+        "200":
+          description: History
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CrossnumbersHistoryResponse"
+
+  /crossnumbers/leaderboard:
+    get:
+      operationId: getCrossnumbersLeaderboard
+      tags: [crossnumbers]
+      summary: Top Crossnumbers players (current streak, longest streak, best time today)
+      responses:
+        "200":
+          description: Leaderboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CrossnumbersLeaderboardResponse"
+
+  /crossnumbers/stats:
+    get:
+      operationId: getCrossnumbersStats
+      tags: [crossnumbers]
+      summary: Global Crossnumbers stats (players, solves today, avg time)
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CrossnumbersStatsResponse"
+
+  /crossnumbers/reminder:
+    get:
+      operationId: getCrossnumbersReminder
+      tags: [crossnumbers]
+      summary: Get the player's daily-reminder preferences
+      responses:
+        "200":
+          description: Reminder preferences
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CrossnumbersReminderPrefs"
+    put:
+      operationId: updateCrossnumbersReminder
+      tags: [crossnumbers]
+      summary: Update the player's daily-reminder preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CrossnumbersReminderPrefs"
+      responses:
+        "200":
+          description: Updated preferences
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CrossnumbersReminderPrefs"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    AuthUser:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          nullable: true
+        firstName:
+          type: string
+          nullable: true
+        lastName:
+          type: string
+          nullable: true
+        profileImageUrl:
+          type: string
+          nullable: true
+      required: [id]
+
+    AuthUserState:
+      type: object
+      properties:
+        isAuthenticated:
+          type: boolean
+        user:
+          oneOf:
+            - $ref: "#/components/schemas/AuthUser"
+            - type: "null"
+      required: [isAuthenticated]
+
+    MobileAuthExchangeRequest:
+      type: object
+      properties:
+        code:
+          type: string
+        code_verifier:
+          type: string
+        state:
+          type: string
+        nonce:
+          type: string
+        redirect_uri:
+          type: string
+      required: [code, code_verifier, state, nonce, redirect_uri]
+
+    MobileAuthExchangeResponse:
+      type: object
+      properties:
+        token:
+          type: string
+      required: [token]
+
+    MobileLogoutResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required: [success]
+
+    GamePhase:
+      type: string
+      enum: [idle, revealing, recalling, completed]
+      description: |
+        idle = today's word has not yet been revealed.
+        revealing = the word is currently being shown.
+        recalling = the word has been hidden, the player must enter their sequence.
+        completed = the player has submitted today's attempt.
+
+    TodayWordResponse:
+      type: object
+      properties:
+        date:
+          type: string
+        word:
+          type: string
+          nullable: true
+          description: Only populated while the player is in the revealing phase.
+        revealDurationMs:
+          type: integer
+        revealEndsAt:
+          type: string
+          nullable: true
+      required: [date, revealDurationMs]
+
+    GameState:
+      type: object
+      properties:
+        date:
+          type: string
+        phase:
+          $ref: "#/components/schemas/GamePhase"
+        currentStreak:
+          type: integer
+        longestStreak:
+          type: integer
+        sequenceLength:
+          type: integer
+          description: Number of words the player must enter today (current streak length + 1)
+        revealDurationMs:
+          type: integer
+        revealEndsAt:
+          type: string
+          nullable: true
+        lastResult:
+          type: string
+          enum: [correct, incorrect]
+          nullable: true
+        quote:
+          type: string
+          nullable: true
+        quoteAuthor:
+          type: string
+          nullable: true
+      required: [date, phase, currentStreak, longestStreak, sequenceLength, revealDurationMs]
+
+    GuessSubmission:
+      type: object
+      properties:
+        words:
+          type: array
+          items:
+            type: string
+      required: [words]
+
+    GuessOutcome:
+      type: object
+      properties:
+        correct:
+          type: boolean
+        currentStreak:
+          type: integer
+        longestStreak:
+          type: integer
+        correctSequence:
+          type: array
+          items:
+            type: string
+        firstWrongIndex:
+          type: integer
+          nullable: true
+        quote:
+          type: string
+          nullable: true
+        quoteAuthor:
+          type: string
+          nullable: true
+      required: [correct, currentStreak, longestStreak, correctSequence]
+
+    StreakHistoryEntry:
+      type: object
+      properties:
+        date:
+          type: string
+        word:
+          type: string
+        index:
+          type: integer
+      required: [date, word, index]
+
+    StreakHistoryResponse:
+      type: object
+      properties:
+        currentStreak:
+          type: integer
+        longestStreak:
+          type: integer
+        words:
+          type: array
+          items:
+            $ref: "#/components/schemas/StreakHistoryEntry"
+      required: [currentStreak, longestStreak, words]
+
+    LeaderboardEntry:
+      type: object
+      properties:
+        userId:
+          type: string
+        displayName:
+          type: string
+        profileImageUrl:
+          type: string
+          nullable: true
+        currentStreak:
+          type: integer
+        longestStreak:
+          type: integer
+      required: [userId, displayName, currentStreak, longestStreak]
+
+    LeaderboardResponse:
+      type: object
+      properties:
+        topLongest:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeaderboardEntry"
+        topCurrent:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeaderboardEntry"
+      required: [topLongest, topCurrent]
+
+    GlobalStatsResponse:
+      type: object
+      properties:
+        totalPlayers:
+          type: integer
+        playersToday:
+          type: integer
+        successesToday:
+          type: integer
+        longestStreakEver:
+          type: integer
+      required: [totalPlayers, playersToday, successesToday, longestStreakEver]
+
+    CrossnumbersAttemptStatus:
+      type: string
+      enum: [not_started, in_progress, solved, failed]
+
+    CrossnumbersState:
+      type: object
+      properties:
+        date:
+          type: string
+        dayName:
+          type: string
+        currentStreak:
+          type: integer
+        longestStreak:
+          type: integer
+        totalSolved:
+          type: integer
+        bestSolveTimeMs:
+          type: integer
+          nullable: true
+        attemptStatus:
+          $ref: "#/components/schemas/CrossnumbersAttemptStatus"
+        startedAt:
+          type: string
+          nullable: true
+        completedAt:
+          type: string
+          nullable: true
+        solveTimeMs:
+          type: integer
+          nullable: true
+        errorCount:
+          type: integer
+        playerGrid:
+          nullable: true
+          description: Server-saved in-progress grid, or null if none saved yet.
+          type: array
+          items:
+            type: array
+            items:
+              $ref: "#/components/schemas/CrossnumbersPlayerCell"
+      required:
+        [
+          date,
+          dayName,
+          currentStreak,
+          longestStreak,
+          totalSolved,
+          attemptStatus,
+          errorCount,
+        ]
+
+    CrossnumbersCell:
+      type: object
+      description: |
+        type=black means a blocked square. type=digit/operator means the player
+        fills a value (a digit 0-9 for digit cells, or +/-/x/÷ for operator cells).
+        If `given` is true, the value is pre-revealed as a hint.
+      properties:
+        type:
+          type: string
+          enum: [black, digit, operator]
+        given:
+          type: boolean
+          nullable: true
+        value:
+          type: string
+          nullable: true
+        number:
+          type: integer
+          nullable: true
+      required: [type]
+
+    CrossnumbersClue:
+      type: object
+      properties:
+        id:
+          type: integer
+        number:
+          type: integer
+        direction:
+          type: string
+          enum: [across, down]
+        clueType:
+          type: string
+          enum: [make-equation, equation-answer]
+        clue:
+          type: string
+        row:
+          type: integer
+        col:
+          type: integer
+        length:
+          type: integer
+      required:
+        [id, number, direction, clueType, clue, row, col, length]
+
+    CrossnumbersPuzzle:
+      type: object
+      properties:
+        date:
+          type: string
+        dayName:
+          type: string
+        size:
+          type: integer
+        grid:
+          type: array
+          description: 2D grid of cells, indexed [row][col].
+          items:
+            type: array
+            items:
+              $ref: "#/components/schemas/CrossnumbersCell"
+        clues:
+          type: array
+          items:
+            $ref: "#/components/schemas/CrossnumbersClue"
+      required: [date, dayName, size, grid, clues]
+
+    CrossnumbersPlayerCell:
+      type: object
+      properties:
+        value:
+          type: string
+          nullable: true
+      required: [value]
+
+    CrossnumbersSubmission:
+      type: object
+      properties:
+        playerGrid:
+          type: array
+          items:
+            type: array
+            items:
+              $ref: "#/components/schemas/CrossnumbersPlayerCell"
+        solveTimeMs:
+          type: integer
+          description: Client-measured solve time in milliseconds.
+      required: [playerGrid, solveTimeMs]
+
+    CrossnumbersProgress:
+      type: object
+      properties:
+        playerGrid:
+          type: array
+          items:
+            type: array
+            items:
+              $ref: "#/components/schemas/CrossnumbersPlayerCell"
+      required: [playerGrid]
+
+    CrossnumbersProgressAck:
+      type: object
+      properties:
+        ok:
+          type: boolean
+      required: [ok]
+
+    CrossnumbersValidationError:
+      type: object
+      properties:
+        entryId:
+          type: integer
+        message:
+          type: string
+      required: [entryId, message]
+
+    CrossnumbersSubmitResult:
+      type: object
+      properties:
+        solved:
+          type: boolean
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/CrossnumbersValidationError"
+        currentStreak:
+          type: integer
+        longestStreak:
+          type: integer
+        totalSolved:
+          type: integer
+        solveTimeMs:
+          type: integer
+          nullable: true
+        bestSolveTimeMs:
+          type: integer
+          nullable: true
+        shareText:
+          type: string
+          nullable: true
+      required: [solved, errors, currentStreak, longestStreak, totalSolved]
+
+    CrossnumbersHistoryEntry:
+      type: object
+      properties:
+        date:
+          type: string
+        dayName:
+          type: string
+        solved:
+          type: boolean
+        solveTimeMs:
+          type: integer
+          nullable: true
+        errorCount:
+          type: integer
+      required: [date, dayName, solved, errorCount]
+
+    CrossnumbersHistoryResponse:
+      type: object
+      properties:
+        currentStreak:
+          type: integer
+        longestStreak:
+          type: integer
+        totalSolved:
+          type: integer
+        bestSolveTimeMs:
+          type: integer
+          nullable: true
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/CrossnumbersHistoryEntry"
+      required:
+        [currentStreak, longestStreak, totalSolved, entries]
+
+    CrossnumbersLeaderboardEntry:
+      type: object
+      properties:
+        userId:
+          type: string
+        displayName:
+          type: string
+        profileImageUrl:
+          type: string
+          nullable: true
+        currentStreak:
+          type: integer
+        longestStreak:
+          type: integer
+        bestSolveTimeMs:
+          type: integer
+          nullable: true
+      required:
+        [userId, displayName, currentStreak, longestStreak]
+
+    CrossnumbersFastestEntry:
+      type: object
+      properties:
+        userId:
+          type: string
+        displayName:
+          type: string
+        profileImageUrl:
+          type: string
+          nullable: true
+        solveTimeMs:
+          type: integer
+      required: [userId, displayName, solveTimeMs]
+
+    CrossnumbersLeaderboardResponse:
+      type: object
+      properties:
+        topLongest:
+          type: array
+          items:
+            $ref: "#/components/schemas/CrossnumbersLeaderboardEntry"
+        topCurrent:
+          type: array
+          items:
+            $ref: "#/components/schemas/CrossnumbersLeaderboardEntry"
+        fastestToday:
+          type: array
+          items:
+            $ref: "#/components/schemas/CrossnumbersFastestEntry"
+      required: [topLongest, topCurrent, fastestToday]
+
+    CrossnumbersStatsResponse:
+      type: object
+      properties:
+        totalPlayers:
+          type: integer
+        playersToday:
+          type: integer
+        solvesToday:
+          type: integer
+        averageSolveSecondsToday:
+          type: integer
+          nullable: true
+        longestStreakEver:
+          type: integer
+      required:
+        [totalPlayers, playersToday, solvesToday, longestStreakEver]
+
+    CrossnumbersReminderPrefs:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        hourLocal:
+          type: integer
+          minimum: 0
+          maximum: 23
+        minuteLocal:
+          type: integer
+          minimum: 0
+          maximum: 59
+        timezone:
+          type: string
+        channel:
+          type: string
+          enum: [browser]
+      required: [enabled, hourLocal, minuteLocal, timezone, channel]
